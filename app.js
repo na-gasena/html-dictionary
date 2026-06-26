@@ -8,6 +8,7 @@ const LS = {
   marked: "htmldict.marked.v1",
   combine: "htmldict.combine.v1",
   note: "htmldict.note.v1",
+  theme: "htmldict.theme.v1",
 };
 
 const state = {
@@ -67,6 +68,22 @@ function shuffled(n) {
   return a;
 }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ── ダークモード ──────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem(LS.theme, theme);
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.textContent = theme === "dark" ? "☀" : "🌙";
+}
+function initTheme() {
+  const saved = localStorage.getItem(LS.theme);
+  const theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  applyTheme(theme);
+}
+document.getElementById("themeToggle").addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
 
 // ── バッジの更新 ───────────────────────────────────────
 function refreshBadges() {
@@ -184,15 +201,36 @@ function shuffleDeck() {
 }
 
 // スワイプ（タッチ）
+// 縦スクロールやタップの揺れを「めくる」と誤判定しないよう、
+// 横方向の移動が縦方向より明確に大きい場合だけページを送る。
+const SWIPE_THRESHOLD = 70;   // この距離(px)未満は無視
+const SWIPE_RATIO = 1.6;      // 横方向が縦方向のこれ以上ないと「横スワイプ」と認めない
 function enableSwipe(node) {
-  let x0 = null;
-  node.addEventListener("touchstart", e => { x0 = e.changedTouches[0].clientX; }, { passive: true });
+  let x0 = null, y0 = null, locked = null;
+  node.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    locked = null;
+  }, { passive: true });
+  node.addEventListener("touchmove", e => {
+    if (x0 == null || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - x0;
+    const dy = e.touches[0].clientY - y0;
+    if (locked == null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      locked = Math.abs(dx) > Math.abs(dy) * SWIPE_RATIO ? "h" : "v";
+    }
+  }, { passive: true });
   node.addEventListener("touchend", e => {
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
-    x0 = null;
+    const dy = e.changedTouches[0].clientY - y0;
+    if (locked === "h" && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * SWIPE_RATIO) {
+      step(dx < 0 ? 1 : -1);
+    }
+    x0 = null; y0 = null; locked = null;
   }, { passive: true });
+  node.addEventListener("touchcancel", () => { x0 = null; y0 = null; locked = null; }, { passive: true });
 }
 
 // ── モード：一覧 ───────────────────────────────────────
@@ -503,5 +541,6 @@ document.addEventListener("keydown", e => {
   }
 });
 
+initTheme();
 refreshBadges();
 switchMode("card");
