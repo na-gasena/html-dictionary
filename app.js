@@ -8,6 +8,7 @@ const LS = {
   marked: "htmldict.marked.v1",
   combine: "htmldict.combine.v1",
   note: "htmldict.note.v1",
+  theme: "htmldict.theme.v1",
 };
 
 const state = {
@@ -184,13 +185,24 @@ function shuffleDeck() {
 }
 
 // スワイプ（タッチ）
+const SWIPE_MIN_DIST = 70;     // この距離未満は無視（誤反応防止）
+const SWIPE_MAX_SKEW = 0.5;    // 縦移動が横移動のこの倍率を超えたら無視（スクロール扱い）
+
 function enableSwipe(node) {
-  let x0 = null;
-  node.addEventListener("touchstart", e => { x0 = e.changedTouches[0].clientX; }, { passive: true });
+  let x0 = null, y0 = null, ignore = false;
+  node.addEventListener("touchstart", e => {
+    // ボタンやリンクなど操作対象の上から始まったタッチはスワイプ扱いしない
+    ignore = !!e.target.closest("button, a, summary, input, textarea");
+    x0 = e.changedTouches[0].clientX;
+    y0 = e.changedTouches[0].clientY;
+  }, { passive: true });
   node.addEventListener("touchend", e => {
-    if (x0 == null) return;
+    if (x0 == null || ignore) { x0 = null; return; }
     const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+    const dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > SWIPE_MIN_DIST && Math.abs(dy) < Math.abs(dx) * SWIPE_MAX_SKEW) {
+      step(dx < 0 ? 1 : -1);
+    }
     x0 = null;
   }, { passive: true });
 }
@@ -502,6 +514,24 @@ document.addEventListener("keydown", e => {
     toggleMark(item.tag); renderCard();
   }
 });
+
+// ── ダークモード ───────────────────────────────────────
+const $themeToggle = document.getElementById("themeToggle");
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  $themeToggle.textContent = theme === "dark" ? "☀" : "🌙";
+}
+function initTheme() {
+  const saved = localStorage.getItem(LS.theme);
+  const theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  applyTheme(theme);
+}
+$themeToggle.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem(LS.theme, next);
+  applyTheme(next);
+});
+initTheme();
 
 refreshBadges();
 switchMode("card");

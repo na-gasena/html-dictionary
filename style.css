@@ -17,6 +17,18 @@
   --mono: "SFMono-Regular", "Consolas", "Menlo", monospace;
 }
 
+[data-theme="dark"] {
+  --paper: #1c1a17;
+  --paper-2: #242220;
+  --ink: #e8e3d8;
+  --ink-soft: #a39c8e;
+  --line: #3a362f;
+  --accent: #e0a08f;
+  --accent-soft: #7a4a3f;
+  --mark: #c9a227;
+  --demo-bg: #15140f;
+}
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; padding: 0; }
@@ -44,6 +56,21 @@ body {
   top: 0;
   z-index: 10;
 }
+.theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1rem;
+  line-height: 1;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  width: 2.2rem;
+  height: 2.2rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.theme-toggle:hover { background: rgba(0,0,0,0.05); }
 .logo {
   font-size: 1.7rem;
   letter-spacing: 0.22em;
