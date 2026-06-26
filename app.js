@@ -7,6 +7,7 @@
 const LS = {
   marked: "htmldict.marked.v1",
   combine: "htmldict.combine.v1",
+  note: "htmldict.note.v1",
 };
 
 const state = {
@@ -18,6 +19,7 @@ const state = {
   query: "",
   cats: new Set(),    // 一覧の絞り込み（空＝すべて）
   seed: null,         // 直近に蒔いた種
+  noteSrc: localStorage.getItem(LS.note) || "",
 };
 
 const $stage = document.getElementById("stage");
@@ -426,6 +428,46 @@ function renderAbout() {
   $stage.appendChild(a);
 }
 
+// ── モード：ノオト（自由なHTMLエディタ＆リアルタイムViewer）──
+function renderNote() {
+  $stage.innerHTML = "";
+  const wrap = el("div", { class: "note-wrap" });
+
+  const editor = el("textarea", {
+    class: "note-editor",
+    placeholder: "ここに、素のHTMLを自由に書いてください…",
+    spellcheck: "false",
+  });
+  editor.value = state.noteSrc;
+
+  const live = el("div", { class: "note-live demo-live" });
+  const update = () => { live.innerHTML = state.noteSrc; };
+  update();
+
+  editor.addEventListener("input", e => {
+    state.noteSrc = e.target.value;
+    localStorage.setItem(LS.note, state.noteSrc);
+    update();
+  });
+
+  wrap.appendChild(el("div", { class: "note-pane" }, [
+    el("span", { class: "field-label" }, "エディタ"),
+    editor,
+  ]));
+  wrap.appendChild(el("div", { class: "note-pane" }, [
+    el("span", { class: "field-label" }, "ビュー（リアルタイム）"),
+    live,
+  ]));
+  $stage.appendChild(wrap);
+
+  const clear = el("button", { class: "act", onclick: () => {
+    state.noteSrc = ""; localStorage.removeItem(LS.note);
+    editor.value = ""; update();
+  }}, "ノオトを空にする");
+  $stage.appendChild(el("div", { class: "card-actions" }, [el("span", { class: "act-spacer" }), clear]));
+  $stage.appendChild(el("p", { class: "note" }, "ここで書いたHTMLは、この端末に保存されます（localStorage）。"));
+}
+
 // ── モード切り替え ─────────────────────────────────────
 const RENDERERS = {
   card: renderCard,
@@ -433,6 +475,7 @@ const RENDERERS = {
   marked: renderMarked,
   combine: renderCombine,
   about: renderAbout,
+  note: renderNote,
 };
 function switchMode(mode) {
   state.mode = mode;

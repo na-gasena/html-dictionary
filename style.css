@@ -204,6 +204,37 @@ body {
   overflow-x: auto;
 }
 .demo-live p { margin: 0.4em 0; }
+
+/* ノオト */
+.note-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+@media (max-width: 760px) {
+  .note-wrap { grid-template-columns: 1fr; }
+}
+.note-pane { display: flex; flex-direction: column; }
+.note-editor {
+  flex: 1;
+  min-height: 360px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--demo-bg);
+  border: 1px dashed var(--accent-soft);
+  border-radius: 5px;
+  padding: 0.8rem;
+  resize: vertical;
+  tab-size: 2;
+}
+.note-live {
+  flex: 1;
+  min-height: 360px;
+  border: 1px dashed var(--accent-soft);
+  border-radius: 5px;
+}
 details.demo-src { margin-top: 0; }
 details.demo-src > summary {
   font-family: var(--sans);
